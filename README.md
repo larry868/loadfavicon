@@ -1,6 +1,6 @@
 # loadfavicon
 
-Package ``load-favicon`` look for and get favicons of given websites, written in go.
+Package ``loadfavicon`` look for and get favicons of given websites, written in go.
 
 ## Value
 
@@ -42,7 +42,7 @@ $ ll
 
 ## Requests or bugs?
 
-https://github.com/lolorenzo777/load-favicon/issues
+https://github.com/lolorenzo777/loadfavicon/issues
 
 
 ## Install
@@ -51,12 +51,12 @@ The program can be installed an used with a command line or the module can be us
 
 Go 1.16 introduces a new way to [install Go programs directly](https://play-with-go.dev/installing-go-programs-directly_go116_en/) with the go command: 
 ```
-go install github.com/lolorenzo777/load-favicon
+go install github.com/lolorenzo777/loadfavicon
 ```
 
 and to use the package into your own source code:
 ```
-go get github.com/lolorenzo777/load-favicon
+go get github.com/lolorenzo777/loadfavicon
 ```
 
 # Licence
