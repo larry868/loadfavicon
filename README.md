@@ -1,18 +1,15 @@
 # loadfavicon
 
-Package ``loadfavicon`` look for and get favicons of given websites, written in go.
+``loadfavicon`` get and download all favicons of given websites, written in go.
 
-## Value
-
-- multiple usecase: install and run standalone, embbeded within another go package, download icon files
-- extract any kind of favicon for a given websites
+It's either a runnable program or a go package you can import in your sources.
 
 ## Features
 
 - look up all favicons referenced in the <head><link> of a website, plus the favicon.ico file itself at the root of the website
 - returns only valid image files and urls. removes duplicates
 - sluggify names to valid filename to enable storage on disk (eg. to put them in cache for example)
-- get all favicons or only one according to choosen options
+- get all favicons or only a single one according to choosen options
 
 ## Examples
 
@@ -56,7 +53,7 @@ go install github.com/lolorenzo777/loadfavicon
 
 and to use the package into your own source code:
 ```
-go get github.com/lolorenzo777/loadfavicon
+go get github.com/lolorenzo777/loadfavicon/getfavicon
 ```
 
 # Licence
