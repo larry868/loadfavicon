@@ -1,3 +1,5 @@
+// Copyright @lolorenzo777 - 2022 May
+
 package main
 
 import (

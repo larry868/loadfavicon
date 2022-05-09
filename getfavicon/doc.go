@@ -1,8 +1,15 @@
+// Copyright @lolorenzo777 - 2022 May
+
 /* 
+getfavicon package get and download all favicons of given websites.
 
-favicon downloads favicons of a given website, written in go.
+Doc to install and use the loadfavicon command: https://pkg.go.dev/github.com/lolorenzo777/loadfavicon#section-documentation
 
-It can be installed an executed with the command line, or it can be embedded in your source code.
+Doc to use the getfavicon package: https://pkg.go.dev/github.com/lolorenzo777/loadfavicon/getfavicon#section-documentation
+
+Get and import the package to your project:
+
+	$ go get github.com/lolorenzo777/loadfavicon/getfavicon
 
 */
-package getfavicon
+package getfavicon 
