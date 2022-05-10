@@ -2,7 +2,11 @@ module github.com/lolorenzo777/loadfavicon
 
 go 1.18
 
-retract v1.1.1
+retract (
+	// change signature of Download()
+	v1.1.2
+	v1.1.1
+)
 
 require github.com/PuerkitoBio/goquery v1.8.0
 

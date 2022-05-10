@@ -52,11 +52,13 @@ var validIconFileExt = []string{
 type TFavicon struct {
     Website url.URL // The absolute URL of the favicon's host website
     Webicon url.URL // The absolute URL of the favicon's file
-    DiskFileName string // The disk file name is based on the slugyfied website URL and the favicon url name
+    DiskFileName string // The disk file name, based on the slugyfied website URL and the favicon url name
     Color string // Color specfications if any specified in the <link> node
     Size string // Size specfications if any specified in the <link> node
     Image []byte // The loaded raw image
 }
+
+
 
 // find is an helper to look for a specific item in a slice.
 //
@@ -260,7 +262,6 @@ func ReadAll(website string) (favicons []TFavicon, err error) {
     return favicons, nil
 }
 
-
 // SelectSingle selects a single favicon from favicons based on a simple rule.
 // It selects .svg if any or selects the bigest size one if multiples one exists, finaly get the .ico if it exists
 // Call LoadAll favicons before to build []TFavicon
@@ -302,12 +303,12 @@ func SelectSingle(favicons []TFavicon) (single *TFavicon) {
 //
 // Set 'single' parameter to download only one favicon (see SelectSingleFavicon for the selection rule)
 //
-// Returns the number of successfully downloded Favicons
-func Download(website string, toDir string, single bool) (int, error) {
+// Returns the slice of successfully downloded Favicons
+func Download(website string, toDir string, single bool) (favicons []TFavicon, err error) {
 
     toDir = strings.ToLower(strings.Trim(toDir, " "))
     if len(toDir) == 0 {
-        return 0, fmt.Errorf("destination directory should not be empty")
+        return favicons, fmt.Errorf("destination directory name should not be empty")
     }
 
     // create the dest dir
@@ -317,26 +318,26 @@ func Download(website string, toDir string, single bool) (int, error) {
     os.MkdirAll(toDir, 0755)
 
     // get the icons
-    favicons, err := ReadAll(website)
+    webfavicons, err := ReadAll(website)
     if err != nil {
-        return 0, err
+        return favicons, err
     }
 
     if single {
-        pone := SelectSingle(favicons)
+        pone := SelectSingle(webfavicons)
         if pone != nil {
-            favicons[0] = *pone
-            favicons = favicons[:1]
+            webfavicons[0] = *pone
+            webfavicons = webfavicons[:1]
         } else {
             // unable to select a single one, make sure favicons is empty
-            favicons = favicons[:0]
+            webfavicons = webfavicons[:0]
         }
     }
 
     // save on disk each favicons
     nb := 0
     var outFile *os.File
-    for _, favicon := range(favicons) {
+    for _, favicon := range(webfavicons) {
         outFile, err = os.Create(filepath.Join(toDir, favicon.DiskFileName))
         if err != nil {
             fmt.Println(err)
@@ -350,6 +351,7 @@ func Download(website string, toDir string, single bool) (int, error) {
         }
         nb++
         outFile.Close()
+        favicons = append(favicons, favicon)
     }
-    return nb, err
+    return favicons, err
 }

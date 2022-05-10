@@ -69,32 +69,32 @@ func TestGetfavicons(t *testing.T) {
 }
 
 func TestDownloadFaviconsDummyWebsite(t *testing.T) {
-	i, err := Download("https://www.dummy.dummy", testDIR, false)
+	favs, err := Download("https://www.dummy.dummy", testDIR, false)
 	if err.Error()[len(err.Error())-12:] != "no such host" {
 		t.Error(err)
 	}
-	if i != 0 {
+	if len(favs) != 0 {
 		t.Fail()
 	}
 }
 
 func TestDownloadFaviconsNone(t *testing.T) {
-	i, err := Download("https://lolorenzo777.github.io/website4tests-1", testDIR, false)
+	favs, err := Download("https://lolorenzo777.github.io/website4tests-1", testDIR, false)
 	if err != nil {
 		t.Error(err)
 	}
-	if i != 0 {
+	if len(favs) != 0 {
 		t.Fail()
 		fNeedCleaning = true
 	}
 }
 
 func TestDownloadFaviconsSingle(t *testing.T) {
-	i, err := Download("https://github.com/", testDIR, true)
+	favs, err := Download("https://github.com/", testDIR, true)
 	if err != nil {
 		t.Error(err)
 	}
-	if i != 1 {
+	if len(favs) != 1 {
 		t.Fail()
 	}
 	fNeedCleaning = true
@@ -102,11 +102,11 @@ func TestDownloadFaviconsSingle(t *testing.T) {
 
 
 func TestDownloadFaviconsMultiple(t *testing.T) {
-	i, err := Download("https://www.docker.com", testDIR, false)
+	favs, err := Download("https://www.docker.com", testDIR, false)
 	if err != nil {
 		t.Error(err)
 	}
-	if i <= 1 {
+	if len(favs) <= 1 {
 		t.Fail()
 	}
 	fNeedCleaning = true
@@ -115,11 +115,11 @@ func TestDownloadFaviconsMultiple(t *testing.T) {
 func TestDownloadFaviconsBatch(t *testing.T) {
 	for _, v := range(gwebsitesOK) {
 		log.Printf("---Download favicon from %q\n", v)
-		i, err := Download(v, testDIR, false)
+		favs, err := Download(v, testDIR, false)
 		if err != nil {
 			t.Error(err)
 		}
-		if i == 0 {
+		if len(favs) == 0 {
 			t.Fail() 
 		}
 	}

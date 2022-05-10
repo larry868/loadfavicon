@@ -20,11 +20,11 @@ func main() {
     if len(os.Args) >=4 {
         single = strings.ToLower(os.Args[3]) == "--single"
     }
-    nb, err := getfavicon.Download(website_url, dest_dir, single)
+    favs, err := getfavicon.Download(website_url, dest_dir, single)
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
     }
-    fmt.Printf("%d favicons downloaded\n", nb)
+    fmt.Printf("%d favicons downloaded\n", len(favs))
 }
 
