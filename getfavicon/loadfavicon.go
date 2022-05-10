@@ -157,23 +157,51 @@ func getFaviconLinks(client *http.Client, website string) (favicons []TFavicon, 
         return nil, fmt.Errorf("fail to parse website url %q", website)
     }
 
+    // add the favicon.ico to the list as the default file to lookup
+    ico := TFavicon{
+        Website: *hosturl,
+        Webicon: *hosturl,
+        DiskFileName: SlugHost(website) + "+favicon.ico"}
+    ico.Webicon.Path += "favicon.ico"
+    favicons = append(favicons, ico)
+    
     // sending the request to the website
     req := hosturl.String()
     resp, err := doHttpGETRequest(client, req)
     if err != nil {
-        return nil, err
+        return favicons, err
+    }
+    if resp.StatusCode != http.StatusOK {
+        // if unable to reach the website
+        // if there's a path, try the roothost if any
+        if len(hosturl.Path) > 0 {
+            resp.Body.Close()
+            hosturl.Path = ""
+
+            ico := TFavicon{
+                Website: *hosturl,
+                Webicon: *hosturl,
+                DiskFileName: SlugHost(website) + "+favicon.ico"}
+            ico.Webicon.Path += "favicon.ico"
+            favicons[0] = ico
+
+            req := hosturl.String()
+            resp, err = doHttpGETRequest(client, req)
+            if err != nil {
+                return favicons, err
+            }
+        }
     }
     defer resp.Body.Close()
     if resp.StatusCode != http.StatusOK {
-        // stop if unable to reach the website
-        return nil, fmt.Errorf("unable to reach %q: %v", req, resp.Status)
+        return favicons, fmt.Errorf("unable to reach %q. Status code:%v", req, resp.Status)
     }
-
+   
     // Create a goquery document from the HTTP response
     document, err := goquery.NewDocumentFromReader(resp.Body)
     if err != nil {
         log.Println(err)
-        return nil, err
+        return favicons, err
     }
 
     // build the list of favicon url related to this website
@@ -201,15 +229,7 @@ func getFaviconLinks(client *http.Client, website string) (favicons []TFavicon, 
             }
         }
     })
-
-    // add the favicon.ico to the list as the default file to lookup
-    ico := TFavicon{
-        Website: *hosturl,
-        Webicon: *hosturl,
-        DiskFileName: SlugHost(website) + "+favicon.ico"}
-    ico.Webicon.Path += "favicon.ico"
-    favicons = append(favicons, ico)
-    
+  
     return favicons, nil
 }
 

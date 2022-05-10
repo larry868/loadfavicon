@@ -33,7 +33,7 @@ var gwebsitesKO = []string{
 var fNeedCleaning bool
 
 const (
-	testDIR = ".test/downloadedicons"
+	testDIR = "downloadedicons"
 )
 
 func init() {
@@ -81,7 +81,7 @@ func TestGetfavicons(t *testing.T) {
 }
 
 func TestDownloadFaviconsDummyWebsite(t *testing.T) {
-	favs, err := Download("https://www.dummy.dummy", testDIR, false)
+	favs, err := Download("https://www.dummy.dummy", ".test/"+testDIR, false)
 	if err.Error()[len(err.Error())-12:] != "no such host" {
 		t.Error(err)
 	}
@@ -91,7 +91,7 @@ func TestDownloadFaviconsDummyWebsite(t *testing.T) {
 }
 
 func TestDownloadFaviconsNone(t *testing.T) {
-	favs, err := Download("https://lolorenzo777.github.io/website4tests-1", testDIR, false)
+	favs, err := Download("https://lolorenzo777.github.io/website4tests-1", ".test/"+testDIR, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -102,7 +102,7 @@ func TestDownloadFaviconsNone(t *testing.T) {
 }
 
 func TestDownloadFaviconsSingle(t *testing.T) {
-	favs, err := Download("https://github.com/", testDIR, true)
+	favs, err := Download("https://github.com/", ".test/"+testDIR, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -110,7 +110,7 @@ func TestDownloadFaviconsSingle(t *testing.T) {
 		t.Fail()
 	}
 
-	favs, err = Download("https://lolorenzo777.github.io/website4tests-2/", testDIR, true)
+	favs, err = Download("https://lolorenzo777.github.io/website4tests-2/", ".test/"+testDIR, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -123,7 +123,7 @@ func TestDownloadFaviconsSingle(t *testing.T) {
 
 
 func TestDownloadFaviconsMultiple(t *testing.T) {
-	favs, err := Download("https://www.docker.com", testDIR, false)
+	favs, err := Download("https://www.docker.com", ".test/"+testDIR, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -136,7 +136,7 @@ func TestDownloadFaviconsMultiple(t *testing.T) {
 func TestDownloadFaviconsBatch(t *testing.T) {
 	for _, v := range(gwebsitesOK) {
 		log.Printf("---Download favicon from %q\n", v)
-		favs, err := Download(v, testDIR, false)
+		favs, err := Download(v, ".test/"+testDIR, false)
 		if err != nil {
 			t.Error(err)
 		}
@@ -149,6 +149,6 @@ func TestDownloadFaviconsBatch(t *testing.T) {
 
 func TestClear(t *testing.T) {
 	if fNeedCleaning {
-		os.RemoveAll(testDIR)
+		os.RemoveAll(".test")
 	}
 }
