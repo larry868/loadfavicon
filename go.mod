@@ -3,6 +3,8 @@ module github.com/lolorenzo777/loadfavicon
 go 1.18
 
 retract (
+	// fix bug in SelectSingle
+	v1.2.1
 	// change signature of Download()
 	v1.1.2
 	v1.1.1

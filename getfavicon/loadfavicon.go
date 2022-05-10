@@ -88,6 +88,7 @@ func parseURL(host *url.URL, website string, clearfile bool) *url.URL {
     if len(url.Host) == 0 {
         if host != nil {
             url.Host = host.Host
+            url.Path = filepath.Join(host.Path, url.Path)
         } else {
             return nil
         }
@@ -206,7 +207,7 @@ func getFaviconLinks(client *http.Client, website string) (favicons []TFavicon, 
         Website: *hosturl,
         Webicon: *hosturl,
         DiskFileName: SlugHost(website) + "+favicon.ico"}
-    ico.Webicon.Path += "/favicon.ico"
+    ico.Webicon.Path += "favicon.ico"
     favicons = append(favicons, ico)
     
     return favicons, nil
@@ -280,14 +281,17 @@ func SelectSingle(favicons []TFavicon) (single *TFavicon) {
     // look for svg
     for _, one := range(favicons) {
         if filepath.Ext(one.DiskFileName) == ".svg" {
-            return &one
+            single = new(TFavicon)
+            *single = one
+            return single
         }
     }
     // loop to look for bigest size or the ico file
     biggestSize := 0
     for _, one := range(favicons) {
         if biggestSize == 0 && filepath.Ext(one.DiskFileName) == ".ico" {
-            single = &one
+            single = new(TFavicon)
+            *single = one
             continue
         }
 
@@ -296,10 +300,12 @@ func SelectSingle(favicons []TFavicon) (single *TFavicon) {
         if err == nil {
             if biggestSize == 0 {
                 biggestSize = cfg.Height * cfg.Width
-                single = &one
+                single = new(TFavicon)
+                *single = one
             } else if cfg.Height * cfg.Width > biggestSize {
                 biggestSize = cfg.Height * cfg.Width
-                single = &one
+                single = new(TFavicon)
+                *single = one
             }
         }
     }

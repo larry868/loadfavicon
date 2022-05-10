@@ -109,6 +109,15 @@ func TestDownloadFaviconsSingle(t *testing.T) {
 	if len(favs) != 1 {
 		t.Fail()
 	}
+
+	favs, err = Download("https://lolorenzo777.github.io/website4tests-2/", testDIR, true)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(favs) != 1 || favs[0].DiskFileName != "lolorenzo777-github-iowebsite4tests-2+test-32x32.png" {
+		t.Fail()
+	}
+
 	fNeedCleaning = true
 }
 
