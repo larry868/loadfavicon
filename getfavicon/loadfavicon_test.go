@@ -40,6 +40,18 @@ func init() {
 	os.RemoveAll(testDIR)
 }
 
+func TestSlugName(t *testing.T) {
+	str := SlugHost("https://go.dev/")
+	if str != "go-dev" {
+		t.Error("https://go.dev/ --> " + str)
+	}
+
+	str = SlugHost("https://lolorenzo777.github.io/website4tests-1") 
+	if str != "lolorenzo777-github-iowebsite4tests-1" {
+		t.Error("https://lolorenzo777.github.io/website4tests-1" + str)
+	}
+}
+
 func TestGetFaviconLinks(t *testing.T) {
     // Create the HTTP client, re-usable, with timeout
     client := &http.Client{}

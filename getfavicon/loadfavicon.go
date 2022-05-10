@@ -136,6 +136,15 @@ func doHttpGETRequest(client *http.Client, getrequest string) (*http.Response, e
     return resp, nil
 }
 
+// SlugHost slugify the website URL 
+func SlugHost(website string) string {
+    hosturl := parseURL(nil, website, true)
+    if hosturl == nil {
+        return ""
+    }
+    return slug.Make(hosturl.Hostname() + hosturl.Path) 
+}
+
 // getFaviconLinks returns a list of urls for the favicons of this website.
 // 
 // It extracts the list of links declared in the <head> section of the site
@@ -180,7 +189,7 @@ func getFaviconLinks(client *http.Client, website string) (favicons []TFavicon, 
                     }
                     size, _ := s.Attr("sizes")
                     color, _ := s.Attr("color")
-                    filename := slug.Make(hosturl.Hostname() + hosturl.Path) + "+" + filepath.Base(phref.Path)
+                    filename := SlugHost(website) + "+" + filepath.Base(phref.Path)
                     favicons = append(favicons, TFavicon{
                                                     Website: *hosturl,
                                                     Webicon: *phref,
@@ -196,7 +205,7 @@ func getFaviconLinks(client *http.Client, website string) (favicons []TFavicon, 
     ico := TFavicon{
         Website: *hosturl,
         Webicon: *hosturl,
-        DiskFileName: slug.Make(hosturl.Hostname()) + "+favicon.ico"}
+        DiskFileName: SlugHost(website) + "+favicon.ico"}
     ico.Webicon.Path += "/favicon.ico"
     favicons = append(favicons, ico)
     
