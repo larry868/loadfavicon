@@ -1,21 +1,18 @@
 module github.com/lolorenzo777/loadfavicon
 
-go 1.18
-
-retract (
-	// fix bug in SelectSingle
-	v1.2.1
-	// change signature of Download()
-	v1.1.2
-	v1.1.1
-)
-
-require github.com/PuerkitoBio/goquery v1.8.0
-
-require github.com/gosimple/slug v1.12.0
+go 1.20
 
 require (
-	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/gosimple/slug v1.13.1
+	github.com/mat/besticon v3.12.0+incompatible
+	github.com/stretchr/testify v1.8.4
+	golang.org/x/image v0.9.0
+	golang.org/x/net v0.12.0
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
