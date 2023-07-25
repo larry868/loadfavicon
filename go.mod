@@ -1,4 +1,4 @@
-module github.com/lolorenzo777/loadfavicon
+module github.com/lolorenzo777/loadfavicon/v2
 
 go 1.20
 

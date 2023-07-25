@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/lolorenzo777/loadfavicon"
+	"github.com/lolorenzo777/loadfavicon/v2"
 )
 
 func main() {
