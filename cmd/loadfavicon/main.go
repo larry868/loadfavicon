@@ -14,25 +14,25 @@ import (
 
 func main() {
 
-	var websiteURL, toDir string
-	var maxres, missing, suffix bool
+	var websiteURL, toDir, size string
+	var onlymissing, suffix bool
 	flag.StringVar(&websiteURL, "url", "", "url of the website to download the favicons")
 	flag.StringVar(&toDir, "to", "", "path to save icon files")
-	flag.BoolVar(&maxres, "maxres", false, "download only the favicon with the maximum resolution")
-	flag.BoolVar(&missing, "missing", false, "download only if the icons file has not already been downloaded")
+	flag.StringVar(&size, "size", "", "{width}x{height}|maxres|svg. download only one icon. download the icon with closest resolution to the request.")
+	flag.BoolVar(&onlymissing, "onlymissing", false, "download the icons file that has not already been downloaded")
 	flag.BoolVar(&suffix, "suffix", false, "suffix the written website file with the icon file name")
 	flag.Parse()
 
 	if websiteURL == "" || toDir == "" {
-		fmt.Println("loadfavicon -url={websiteURL} -to={toDir} [--maxres] [--missing] [--prefix]")
+		fmt.Println("loadfavicon -url={websiteURL} -to={toDir} [--size] [--onlymissing] [--suffix]")
 		return
 	}
 
 	client := &http.Client{Timeout: time.Second * 5}
-	n, err := loadfavicon.Download(client, websiteURL, toDir, maxres, missing, suffix)
+	icons, err := loadfavicon.Download(client, websiteURL, toDir, size, onlymissing, suffix)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Printf("%d favicons downloaded\n", n)
+	fmt.Printf("%d favicons downloaded\n", len(icons))
 }

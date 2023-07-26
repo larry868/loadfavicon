@@ -39,89 +39,123 @@ var _FAVICON_EXT = []string{
 }
 
 // Download downloads favicons related to a website and save them locally to the 'toDir' directory. The directory is created if it does not exist.
+// The written file is suffixed with the icon file name.
+// Download does not overwrite existing file on disk if onlymissing parameter is turned on.
+//
+// You need to provide an http.Client for example with a timeout like this :
+//
+//	client := &http.Client{Timeout: time.Second * 5}
+//
+// Returns the number of successfull downloads.
+func DownloadAll(client *http.Client, websiteURL string, toDir string, onlymissing bool) (n int, err error) {
+	icons, err := Download(client, websiteURL, toDir, "", onlymissing, true)
+	return len(icons), err
+}
+
+// DownloadOne downloads the favicon of a website and save it locally to the 'toDir' directory. The directory is created if it does not exist.
+// DownloadOne downloads the svg version if it exists otherwize looks for one with the highest resolution.
+// The written file is not suffixed with the icon file name.
+// DownloadOne does not overwrite existing file on disk if onlymissing parameter is turned on.
+//
+// You need to provide an http.Client for example with a timeout like this :
+//
+//	client := &http.Client{Timeout: time.Second * 5}
+//
+// Returns the filename of the downloaded icon. If none icons are found the returned filename is empty with no error.
+func DownloadOne(client *http.Client, websiteURL string, toDir string, onlymissing bool) (iconfilename string, err error) {
+	icons, err := Download(client, websiteURL, toDir, "maxres", onlymissing, false)
+	if err != nil || len(icons) == 0 {
+		return "", err
+	}
+	return icons[0].DiskFileName(false), nil
+}
+
+// Download downloads favicons related to a website and save it locally to the 'toDir' directory. The directory is created if it does not exist.
+// Download downloads the svg version if it exists otherwize looks for one in the given size. If no favicon exists in te given size, DownloadOne downloads the closest favicon with an upper number of pixels.
 //
 // Parameters:
 //
-//	maxres = true // downloads the favicon with the hihest resolution and only that one.
-//	missing = true // downloads if the file is missing on the disk, do not overwrite.
+//	size = {width}x{height} or maxres // If the size is empty all favicons found are downloaded. If the size is 'maxres' only the favicon with the maximum resolution is downloaded.
+//	onlymissing = true // downloads if the file is missing on the disk, do not overwrite.
 //	suffix = true // written file name will be suffixed with the icon file name.
 //
 // You need to provide an http.Client for example with a timeout like this :
 //
 //	client := &http.Client{Timeout: time.Second * 5}
 //
-// Returns the number of successfull downlod and any error.
-func Download(client *http.Client, websiteURL string, toDir string, maxres bool, missing bool, suffix bool) (n int, errX error) {
+// Returns the slice of downloaded Favicons. If none icons were found the returned slice is empty with no error.
+func Download(client *http.Client, websiteURL string, toDir string, size string, onlymissing bool, suffix bool) (favicons []Favicon, err error) {
 
 	toDir = strings.ToLower(strings.Trim(toDir, " "))
 	if len(toDir) == 0 {
-		return 0, fmt.Errorf("Download: empty destination directory")
+		return favicons, fmt.Errorf("Download: empty destination directory")
 	}
 
 	// create the dest dir
-	toDir, errX = filepath.Abs(toDir)
-	if errX != nil {
-		return 0, fmt.Errorf("Download: %+w", errX)
+	toDir, err = filepath.Abs(toDir)
+	if err != nil {
+		return favicons, fmt.Errorf("Download: %+w", err)
 	}
 	os.MkdirAll(toDir, 0755)
 
 	// get the icons
-	favicons, err := Read(client, websiteURL, maxres)
-	if err != nil {
-		return 0, fmt.Errorf("Download: %+w", err)
+	icons, errX := Read(client, websiteURL, size)
+	if errX != nil {
+		return favicons, fmt.Errorf("Download: %+w", errX)
 	}
 
 	// save on disk each favicons
-	n = 0
-	var outFile *os.File
-	for _, favicon := range favicons {
-		ifn := filepath.Join(toDir, favicon.DiskFileName(suffix))
-		if missing {
-			_, errF := os.Stat(ifn)
-			if errF == nil { // || !os.IsNotExist(errF)
+	for _, icon := range icons {
+		ifn := filepath.Join(toDir, icon.DiskFileName(suffix))
+		if onlymissing {
+			_, errX := os.Stat(ifn)
+			if errX == nil { // || !os.IsNotExist(errF)
 				continue
 			}
 		}
-		outFile, err = os.Create(ifn)
-		if err != nil {
-			return n, fmt.Errorf("Download: %+w", err)
+		outFile, errX := os.Create(ifn)
+		if errX != nil {
+			return favicons, fmt.Errorf("Download: %+w", errX)
 		}
-		_, err = outFile.Write(favicon.Image)
+		_, errX = outFile.Write(icon.Image)
 		outFile.Close()
-		if err != nil {
-			return n, fmt.Errorf("Download: %+w", err)
+		if errX != nil {
+			return favicons, fmt.Errorf("Download: %+w", errX)
 		}
-		n++
-
+		favicons = append(favicons, icon)
 		// DEBUG:	fmt.Println(favicon)
 	}
-	return n, err
+	return favicons, nil
 }
 
 // Read reads favicons of a website and returns them in a slice.
 // The returned slice is sorted from the highest icon resolution to the lowest one, starting with SVG ones if any.
 //
-// Parameters:
+// The size parameter must follow this pattern:
 //
-//	maxres = true // downloads the favicon with the hihest resolution and only that one.
+//	size = {width}x{height} or maxres
 //
-// Only one Favicon is returned if maxres is turned on.
+// If the size is empty all favicons found are read. If the size is 'maxres' only the favicon with the maximum resolution is downloaded.
 //
 // You need to provide an http.Client for example with a timeout like this :
 //
 //	client := &http.Client{Timeout: time.Second * 5}
 //
 // The returned slice contains valid images only. (see Favicon.ReadImage)
-func Read(client *http.Client, websiteURL string, maxres bool) (favicons []Favicon, errX error) {
+func Read(client *http.Client, websiteURL string, sz ...string) (favicons []Favicon, err error) {
+	size := ""
+	if len(sz) > 0 {
+		size = strings.ToLower(strings.Trim(sz[0], " "))
+	}
 
 	// get Favicon Links from the website header content
-	icons, err := getFaviconLinks(client, websiteURL)
-	if err != nil {
-		return nil, fmt.Errorf("Read [%s]: %+w", websiteURL, err)
+	icons, errX := getFaviconLinks(client, websiteURL)
+	if errX != nil {
+		return nil, fmt.Errorf("Read [%s]: %+w", websiteURL, errX)
 	}
 
 	// reduce the scope to the svg file if any, and if maxres request
-	if maxres {
+	if size == "maxres" {
 		for _, icon := range icons {
 			if icon.IsSVG() {
 				icons = make([]Favicon, 1)
@@ -141,18 +175,38 @@ func Read(client *http.Client, websiteURL string, maxres bool) (favicons []Favic
 		favicons = append(favicons, icon)
 	}
 
+	// return empty favicons if none found, and no error
+	if len(favicons) == 0 {
+		return favicons, nil
+	}
+
+	// sort favicons from high res to low res, starting by svg, finishing by unknown res
 	sort.Slice(favicons, func(i, j int) bool {
 		return favicons[i].Pixels() > favicons[j].Pixels()
 	})
 
-	// get only one if maxres request
-	if maxres && len(favicons) > 1 {
-		maxicon := favicons[0]
-		favicons = make([]Favicon, 1)
-		favicons[0] = maxicon
+	// return all favicons is no specific size requested
+	if size == "" {
+		return favicons, nil
 	}
 
-	return favicons, nil
+	oneicon := make([]Favicon, 1)
+
+	// return the favicon with maxrez if the request is svg, maxres, or if unable to understand the requested size
+	reqres := ToPixels(size)
+	if size == "maxres" || size == "svg" || reqres <= 0 {
+		oneicon[0] = favicons[0]
+		return oneicon, nil
+	}
+
+	// scan from low res to high res and returns the first one just above or equal the requested size
+	for i := len(favicons) - 1; i >= 0; i-- {
+		if favicons[i].Pixels() >= reqres || i == 0 {
+			oneicon[0] = favicons[i]
+			break
+		}
+	}
+	return oneicon, nil
 }
 
 // GetFaviconLinks returns a list of favicons urls for websiteURL.
@@ -172,19 +226,30 @@ func GetFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 
 func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon, errX error) {
 
-	hosturl, err := url.Parse(websiteURL)
-	if hosturl == nil {
+	weburl, err := url.Parse(websiteURL)
+	if weburl == nil {
 		return nil, fmt.Errorf("GetFaviconLinks: %+w", err)
 	}
 
 	// load the website page
-	resp, err := doHttpGETRequest(client, hosturl.String())
+	resp, err := doHttpGETRequest(client, weburl.String())
 	if err != nil {
 		return favicons, fmt.Errorf("GetFaviconLinks: %+w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return favicons, fmt.Errorf("GetFaviconLinks: %q returned status %s", hosturl.String(), resp.Status)
+		return favicons, fmt.Errorf("GetFaviconLinks: %q returned status %s", weburl.String(), resp.Status)
+	}
+
+	// if not a text content then try with the host without the path
+	// if does not succeed yet then return an error
+	ctyp := resp.Header.Get("Content-Type")
+	if ctyp[:4] != "text" {
+		if weburl.Path != "" {
+			weburl.Path = ""
+			return getFaviconLinks(client, weburl.String())
+		}
+		return favicons, fmt.Errorf("GetFaviconLinks: unable to find favicon")
 	}
 
 	doc, err := html.Parse(resp.Body)
@@ -216,8 +281,14 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 						if filepath.Ext(phref.Path) != "" && find(_FAVICON_EXT, filepath.Ext(phref.Path)) == -1 {
 							return
 						}
+						// avoid duplicate, rare case !
+						for _, already := range favicons {
+							if already.WebIconURL.String() == phref.String() {
+								return
+							}
+						}
 						favicons = append(favicons, Favicon{
-							WebsiteURL: hosturl,
+							WebsiteURL: weburl,
 							WebIconURL: phref,
 							Size:       sizes,
 							Color:      color})
@@ -238,11 +309,11 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 
 	// append the favicon.ico to the list as the default file to lookup
 	if len(favicons) == 0 {
-		faviconpath, err := url.JoinPath(hosturl.String(), "favicon.ico")
+		faviconpath, err := url.JoinPath(weburl.String(), "favicon.ico")
 		if err != nil {
 			log.Printf("GetFaviconLinks: %s", err.Error())
 		} else {
-			ico := Favicon{WebsiteURL: hosturl}
+			ico := Favicon{WebsiteURL: weburl}
 			ico.WebIconURL, _ = url.Parse(faviconpath)
 			favicons = append(favicons, ico)
 		}

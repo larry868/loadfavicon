@@ -14,8 +14,9 @@
             "console": "integratedTerminal",
             "args": [
                 "-url=http://dev.to",
-                "-to=./test/cache",
-                "--missing",
+                "-to=./.test/cache",
+                "--size",
+                "maxres"
             ]
         }
     ]

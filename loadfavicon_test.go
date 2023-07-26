@@ -4,7 +4,6 @@ package loadfavicon
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var _gwebsitesOK = []string{
@@ -43,7 +43,6 @@ func ExampleFavicon_DiskFileName() {
 	}
 
 	data := []Test{
-		{web: "https://www.dummy.com"},
 		{web: "https://www.dummy.com",
 			icon: "favicon.ico",
 		},
@@ -62,19 +61,24 @@ func ExampleFavicon_DiskFileName() {
 	}
 
 	for _, d := range data {
-		icon := new(Favicon)
-		icon.WebsiteURL, _ = url.Parse(d.web)
-		icon.WebIconURL, _ = url.Parse(d.icon)
-		icon.Size = d.sz
-		fmt.Println(icon.DiskFileName(false))
+		for f := 0; f <= 1; f++ {
+			icon := new(Favicon)
+			icon.WebsiteURL, _ = url.Parse(d.web)
+			icon.WebIconURL, _ = url.Parse(d.icon)
+			icon.Size = d.sz
+			fmt.Println(icon.DiskFileName(f == 1))
+		}
 	}
 
 	// Output:
-	// www-dummy-com+
 	// www-dummy-com+.ico
+	// www-dummy-com++favicon.ico
 	// www-dummy-com+16x16.ico
+	// www-dummy-com+16x16+favicon.ico
 	// www-dummy-com+128x128.png
+	// www-dummy-com+128x128+favicon.png
 	// www-dummy-com+64x64.png
+	// www-dummy-com+64x64+favicon.png
 }
 
 func TestGetFaviconLinks_1(t *testing.T) {
@@ -97,7 +101,7 @@ func TestGetFaviconLinks_1(t *testing.T) {
 func ExampleGetFaviconLinks() {
 	printlist := func(icons []Favicon) {
 		for _, icon := range icons {
-			fmt.Println(icon)
+			fmt.Println(icon.WebsiteURL, " -- ", icon.WebIconURL)
 		}
 	}
 
@@ -111,102 +115,92 @@ func ExampleGetFaviconLinks() {
 	}
 
 	// Output:
-	// test-32x32.png, Color:"", Size:"32x32", MimeType: Loaded:false
+	// https://lolorenzo777.github.io/website4tests-2  --  test-32x32.png
 	//
-	// /favicon-32x32.png, Color:"", Size:"32x32", MimeType: Loaded:false
-	// /favicon-16x16.png, Color:"", Size:"16x16", MimeType: Loaded:false
-	// /apple-touch-icon.png, Color:"", Size:"", MimeType: Loaded:false
-	// /apple-touch-icon.png, Color:"", Size:"180x180", MimeType: Loaded:false
-	// /favicon.ico, Color:"", Size:"", MimeType: Loaded:false
-}
-
-func TestGetFaviconLinks_2(t *testing.T) {
-	printlist := func(icons []Favicon) {
-		for _, icon := range icons {
-			fmt.Println(icon)
-		}
-	}
-
-	client := &http.Client{Timeout: time.Second * 5}
-	w := "https://www.cloudflare.com/"
-	icons, err := GetFaviconLinks(client, w)
-	assert.NoError(t, err, w)
-	assert.True(t, err != nil || len(icons) > 0, w)
-
-	fmt.Println(w)
-	printlist(icons)
+	// https://laurent.lourenco.pro  --  /favicon-32x32.png
+	// https://laurent.lourenco.pro  --  /favicon-16x16.png
+	// https://laurent.lourenco.pro  --  /apple-touch-icon.png
+	// https://laurent.lourenco.pro  --  /favicon.ico
 }
 
 func TestGetFaviconLinks_3(t *testing.T) {
 	client := &http.Client{Timeout: time.Second * 5}
 	for _, v := range _gwebsitesOK {
 		icons, err := GetFaviconLinks(client, v)
-		assert.NoError(t, err, v)
+		require.NoError(t, err, v)
 		assert.True(t, err != nil || len(icons) > 0, v)
 	}
 }
 
-func TestRead(t *testing.T) {
-	w := "https://github.com/"
+func TestRead_1(t *testing.T) {
+	w := "https://laurent.lourenco.pro"
 	client := &http.Client{Timeout: time.Second * 5}
-	favicon, err := Read(client, w, false)
-	assert.NoError(t, err)
+	favicon, err := Read(client, w)
+	require.NoError(t, err)
+	assert.True(t, len(favicon) == 3)
+}
+
+func TestRead_2(t *testing.T) {
+	// special cases
+	// w := "https://bitcoin.org/bitcoin.pdf"
+	// w := "https://twitter.com/"
+	w := "https://mail.proton.me/u/0/inbox/"
+	client := &http.Client{Timeout: time.Second * 5}
+	favicon, err := Read(client, w)
+	require.NoError(t, err)
 	assert.True(t, len(favicon) > 0)
 }
 
 func TestDownloadDummy(t *testing.T) {
 	client := &http.Client{Timeout: time.Second * 5}
-	_, err := Download(client, "https://www.dummy.dummy", TEST_DIR, false, false, false)
+	_, err := Download(client, "https://www.dummy.dummy", TEST_DIR, "", false, false)
 	assert.ErrorContains(t, err, "no such host")
 }
 
 func TestDownloadNone(t *testing.T) {
 	client := &http.Client{Timeout: time.Second * 5}
-	n, err := Download(client, "https://lolorenzo777.github.io/website4tests-1", TEST_DIR, false, false, false)
-	assert.NoError(t, err)
-	assert.Equal(t, 0, n)
+	icons, err := Download(client, "https://lolorenzo777.github.io/website4tests-1", TEST_DIR, "", false, false)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(icons))
 }
 
 func TestDownloadMulti(t *testing.T) {
 	client := &http.Client{Timeout: time.Second * 5}
-	n, err := Download(client, "https://laurent.lourenco.pro", TEST_DIR, false, false, true)
-	assert.NoError(t, err)
-	assert.True(t, n > 1)
-}
+	icons, err := Download(client, "https://laurent.lourenco.pro", TEST_DIR, "", false, false)
+	require.NoError(t, err)
+	assert.True(t, len(icons) == 3)
 
-func TestDownloadNoOverwrite(t *testing.T) {
-	client := &http.Client{Timeout: time.Second * 5}
-	n, err := Download(client, "https://laurent.lourenco.pro", TEST_DIR, false, false, false)
-	assert.NoError(t, err)
-	assert.True(t, n > 1)
-
-	n, err = Download(client, "https://laurent.lourenco.pro", TEST_DIR, false, true, false)
-	assert.NoError(t, err)
-	assert.True(t, n == 0)
+	icons, err = Download(client, "https://laurent.lourenco.pro", TEST_DIR, "", true, false)
+	require.NoError(t, err)
+	assert.True(t, len(icons) == 0)
 }
 
 func TestDownloadBatch(t *testing.T) {
 	client := &http.Client{Timeout: time.Second * 5}
 	for _, v := range _gwebsitesOK {
-		n, err := Download(client, v, TEST_DIR, true, false, false)
-		assert.NoError(t, err)
-		assert.True(t, n > 0)
+		one, err := DownloadOne(client, v, TEST_DIR, false)
+		require.NoError(t, err)
+		assert.True(t, one != "")
 	}
 }
 
 func ExampleDownload() {
 	client := &http.Client{Timeout: time.Second * 5}
-	Download(client, "https://lolorenzo777.github.io/website4tests-2", "./examples", false, false, false)
-	Download(client, "https://laurent.lourenco.pro", "./examples", true, false, false)
-	Download(client, "https://www.google.com", "./examples", true, false, true)
+	DownloadOne(client, "https://lolorenzo777.github.io/website4tests-2", "./examples", false)
+	DownloadAll(client, "https://laurent.lourenco.pro", "./examples", false)
+	DownloadOne(client, "https://web.archive.org/", "./examples", false)
+	DownloadOne(client, "https://www.wikipedia.org", "./examples", false)
 
-	files, _ := ioutil.ReadDir("./examples")
+	files, _ := os.ReadDir("./examples")
 	for _, file := range files {
 		fmt.Println(file.Name())
 	}
 
 	// Output:
-	// laurent-lourenco-pro+180x180.png
+	// laurent-lourenco-pro+16x16+favicon-16x16.png
+	// laurent-lourenco-pro+180x180+apple-touch-icon.png
+	// laurent-lourenco-pro+32x32+favicon-32x32.png
 	// lolorenzo777-github-io+32x32.png
-	// www-google-com+32x32+favicon.ico
+	// web-archive-org+32x32.ico
+	// www-wikipedia-org+160x160.png
 }
