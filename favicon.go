@@ -15,7 +15,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -50,28 +49,14 @@ func (icon Favicon) String() string {
 
 // Pixels returns the total number of pixels.
 // Returns MaxInt for SVG.
-// Returns -1 if unable to for get the image size or if the image is not loaded yet.
+// Returns -1 if unable to get the image size or if the image is not loaded yet.
 func (icon Favicon) Pixels() int64 {
 
-	if icon.Size == "SVG" {
+	if strings.ToLower(icon.Size) == "svg" {
 		const MaxInt = int64(^uint64(0) >> 1)
 		return MaxInt
 	}
-
-	dim := strings.Split(strings.ToLower(icon.Size), "x")
-	if len(dim) != 2 {
-		return -1
-	}
-	x, err := strconv.ParseInt(dim[0], 10, 64)
-	if err != nil {
-		return -1
-	}
-	y, err := strconv.ParseInt(dim[1], 10, 64)
-	if err != nil {
-		return -1
-	}
-
-	return x * y
+	return ToPixels(icon.Size)
 }
 
 // IsSVG returns true if the icon file name extension is ".svg"
@@ -84,11 +69,10 @@ func (icon Favicon) AbsURL() string {
 	if icon.WebIconURL.IsAbs() {
 		return icon.WebIconURL.String()
 	}
-	j, err := url.JoinPath(icon.WebsiteURL.String(), icon.WebIconURL.String())
-	if err != nil {
-		return ""
-	}
-	return j
+
+	abs := icon.WebsiteURL
+	abs.Path = icon.WebIconURL.Path
+	return abs.String()
 }
 
 // DiskFileName returns a slugified file name based on the WebsiteURL, the Size and WebIconURL.
