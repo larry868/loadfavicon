@@ -109,7 +109,7 @@ func Download(client *http.Client, websiteURL string, toDir string, size string,
 		ifn := filepath.Join(toDir, icon.DiskFileName(suffix))
 		if onlymissing {
 			_, errX := os.Stat(ifn)
-			if errX == nil { // || !os.IsNotExist(errF)
+			if errX == nil { // !os.IsNotExist(errF)
 				continue
 			}
 		}
