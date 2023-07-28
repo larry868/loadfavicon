@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/gosimple/slug v1.13.1
+	github.com/lolorenzo777/verbose v1.2.8
 	github.com/mat/besticon v3.12.0+incompatible
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/image v0.9.0
