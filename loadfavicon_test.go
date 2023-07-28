@@ -51,12 +51,16 @@ func ExampleFavicon_DiskFileName() {
 			sz:   "16X16",
 		},
 		{web: "https://www.dummy.com/website/",
+			icon: "https://cdn.com/dummy/favicon.png",
+			sz:   "64x64",
+		},
+		{web: "https://www.dummy.com/website/",
 			icon: "/assets/favicon.png",
 			sz:   "128X128",
 		},
 		{web: "https://www.dummy.com/website/",
-			icon: "https://cdn.com/dummy/favicon.png",
-			sz:   "64x64",
+			icon: "./assets/favicon.png?1234567",
+			sz:   "256x256",
 		},
 	}
 
@@ -75,10 +79,12 @@ func ExampleFavicon_DiskFileName() {
 	// www-dummy-com++favicon.ico
 	// www-dummy-com+16x16.ico
 	// www-dummy-com+16x16+favicon.ico
-	// www-dummy-com+128x128.png
-	// www-dummy-com+128x128+favicon.png
 	// www-dummy-com+64x64.png
 	// www-dummy-com+64x64+favicon.png
+	// www-dummy-com+128x128.png
+	// www-dummy-com+128x128+favicon.png
+	// www-dummy-com+256x256.png
+	// www-dummy-com+256x256+favicon.png
 }
 
 func TestGetFaviconLinks_1(t *testing.T) {

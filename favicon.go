@@ -81,9 +81,9 @@ func (icon Favicon) AbsURL() string {
 //
 //	{WebsiteURL.Host}+{size}[+{base WebIconURL}].{ext}
 //
-// where each part is slugified.
+// where each part is slugified. Any query and fragment are ignored.
 //
-// Returns only the file name and not an absolute path.
+// Returns only the file name, not an absolute path.
 func (icon Favicon) DiskFileName(suffix bool) string {
 
 	fn := slug.Make(icon.WebsiteURL.Host)
@@ -92,10 +92,13 @@ func (icon Favicon) DiskFileName(suffix bool) string {
 		fn += strings.ToLower(strings.Trim(icon.Size, " "))
 	}
 
-	ext := path.Ext(icon.WebIconURL.String())
+	webiconurl := icon.WebIconURL
+	webiconurl.RawQuery = ""
+	webiconurl.Fragment = ""
+	ext := path.Ext(webiconurl.String())
 	if suffix {
 		fn += "+"
-		base := path.Base(icon.WebIconURL.Path)
+		base := path.Base(webiconurl.Path)
 		if base != "" && base != "." && base != "/" {
 			base, _ = strings.CutSuffix(base, ext)
 			fn += slug.Make(base)
