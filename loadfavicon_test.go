@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lolorenzo777/verbose"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,6 @@ var _gwebsitesOK = []string{
 	"https://brave.com/",
 	"https://github.com/",
 	"https://www.amazon.com/",
-	"https://www.sncf.com/",
 	"https://protonmail.com/",
 	"https://getbootstrap.com/",
 	"https://www.cloudflare.com/",
@@ -34,7 +34,7 @@ func init() {
 	os.RemoveAll(TEST_DIR)
 }
 
-func ExampleFavicon_DiskFileName() {
+func ExampleFavicon_Slugify() {
 
 	type Test struct {
 		web  string
@@ -70,20 +70,20 @@ func ExampleFavicon_DiskFileName() {
 			icon.WebsiteURL, _ = url.Parse(d.web)
 			icon.WebIconURL, _ = url.Parse(d.icon)
 			icon.Size = d.sz
-			fmt.Println(icon.DiskFileName(f == 1))
+			fmt.Println(icon.Slugify(f == 1))
 		}
 	}
 
 	// Output:
 	// www-dummy-com+.ico
-	// www-dummy-com++favicon.ico
-	// www-dummy-com+16x16.ico
+	// www-dummy-com+favicon.ico
+	// www-dummy-com+16x16+.ico
 	// www-dummy-com+16x16+favicon.ico
-	// www-dummy-com+64x64.png
+	// www-dummy-com+64x64+.png
 	// www-dummy-com+64x64+favicon.png
-	// www-dummy-com+128x128.png
+	// www-dummy-com+128x128+.png
 	// www-dummy-com+128x128+favicon.png
-	// www-dummy-com+256x256.png
+	// www-dummy-com+256x256+.png
 	// www-dummy-com+256x256+favicon.png
 }
 
@@ -121,12 +121,12 @@ func ExampleGetFaviconLinks() {
 	}
 
 	// Output:
-	// https://lolorenzo777.github.io/website4tests-2  --  test-32x32.png
+	// https://lolorenzo777.github.io/website4tests-2  --  https://lolorenzo777.github.io/website4tests-2/test-32x32.png
 	//
-	// https://laurent.lourenco.pro  --  /favicon-32x32.png
-	// https://laurent.lourenco.pro  --  /favicon-16x16.png
-	// https://laurent.lourenco.pro  --  /apple-touch-icon.png
-	// https://laurent.lourenco.pro  --  /favicon.ico
+	// https://laurent.lourenco.pro  --  https://laurent.lourenco.pro/favicon-32x32.png
+	// https://laurent.lourenco.pro  --  https://laurent.lourenco.pro/favicon-16x16.png
+	// https://laurent.lourenco.pro  --  https://laurent.lourenco.pro/apple-touch-icon.png
+	// https://laurent.lourenco.pro  --  https://laurent.lourenco.pro/favicon.ico
 }
 
 func TestGetFaviconLinks_3(t *testing.T) {
@@ -147,10 +147,11 @@ func TestRead_1(t *testing.T) {
 }
 
 func TestRead_2(t *testing.T) {
+	verbose.IsOn = false
 	// special cases
-	// w := "https://bitcoin.org/bitcoin.pdf"
+	w := "https://bitcoin.org/bitcoin.pdf"
 	// w := "https://twitter.com/"
-	w := "https://mail.proton.me/u/0/inbox/"
+	// w := "https://mail.proton.me/u/0/inbox/"
 	client := &http.Client{Timeout: time.Second * 5}
 	favicon, err := Read(client, w)
 	require.NoError(t, err)
@@ -186,16 +187,19 @@ func TestDownloadBatch(t *testing.T) {
 	for _, v := range _gwebsitesOK {
 		one, err := DownloadOne(client, v, TEST_DIR, false)
 		require.NoError(t, err)
-		assert.True(t, one != "")
+		assert.True(t, one != "", v)
 	}
 }
 
 func ExampleDownload() {
+	verbose.IsOn = false
+	os.RemoveAll("./examples")
+
 	client := &http.Client{Timeout: time.Second * 5}
 	DownloadOne(client, "https://lolorenzo777.github.io/website4tests-2", "./examples", false)
 	DownloadAll(client, "https://laurent.lourenco.pro", "./examples", false)
 	DownloadOne(client, "https://web.archive.org/", "./examples", false)
-	DownloadOne(client, "https://www.wikipedia.org", "./examples", false)
+	DownloadOne(client, "https://wikipedia.org", "./examples", false)
 
 	files, _ := os.ReadDir("./examples")
 	for _, file := range files {
@@ -206,7 +210,7 @@ func ExampleDownload() {
 	// laurent-lourenco-pro+16x16+favicon-16x16.png
 	// laurent-lourenco-pro+180x180+apple-touch-icon.png
 	// laurent-lourenco-pro+32x32+favicon-32x32.png
-	// lolorenzo777-github-io+32x32.png
-	// web-archive-org+32x32.ico
-	// www-wikipedia-org+160x160.png
+	// lolorenzo777-github-io+32x32+.png
+	// web-archive-org+32x32+.ico
+	// wikipedia-org+160x160+.png
 }

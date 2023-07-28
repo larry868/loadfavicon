@@ -9,16 +9,14 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
-	"unicode/utf8"
 
-	"github.com/gosimple/slug"
+	"github.com/lolorenzo777/loadfavicon/v2/pkg/svg"
+	"github.com/lolorenzo777/verbose"
 	xicon "github.com/mat/besticon/ico"
 	"golang.org/x/image/webp"
 )
@@ -31,6 +29,7 @@ var _FAVICON_MIMETYPE = []string{
 	"image/svg+xml",
 	"image/jpeg",
 	"image/webp",
+	"image/vnd.microsoft.icon",
 }
 
 type Favicon struct {
@@ -65,17 +64,16 @@ func (icon Favicon) IsSVG() bool {
 }
 
 // AbsURL returns the url string of the webicon, making an absolute path with the WebsiteURL if required.
-func (icon Favicon) AbsURL() string {
-	if icon.WebIconURL.IsAbs() {
-		return icon.WebIconURL.String()
-	}
+// func (icon Favicon) AbsURL() string {
+// 	if icon.WebIconURL.IsAbs() {
+// 		return icon.WebIconURL.String()
+// 	}
+// 	abs := icon.WebsiteURL
+// 	abs.Path = icon.WebIconURL.Path
+// 	return abs.String()
+// }
 
-	abs := icon.WebsiteURL
-	abs.Path = icon.WebIconURL.Path
-	return abs.String()
-}
-
-// DiskFileName returns a slugified file name based on the WebsiteURL, the Size and WebIconURL.
+// Slugify returns a slugified file name based on the WebsiteURL, the Size and WebIconURL.
 //
 // The DiskFileName pattern is:
 //
@@ -84,36 +82,56 @@ func (icon Favicon) AbsURL() string {
 // where each part is slugified. Any query and fragment are ignored.
 //
 // Returns only the file name, not an absolute path.
-func (icon Favicon) DiskFileName(suffix bool) string {
-
-	fn := slug.Make(icon.WebsiteURL.Host)
-	fn += "+"
-	if icon.Size != "" {
-		fn += strings.ToLower(strings.Trim(icon.Size, " "))
-	}
+func (icon Favicon) Slugify(iconpath bool) string {
 
 	webiconurl := icon.WebIconURL
 	webiconurl.RawQuery = ""
 	webiconurl.Fragment = ""
-	ext := path.Ext(webiconurl.String())
-	if suffix {
-		fn += "+"
-		base := path.Base(webiconurl.Path)
-		if base != "" && base != "." && base != "/" {
-			base, _ = strings.CutSuffix(base, ext)
-			fn += slug.Make(base)
-		}
+	fname := ""
+	if iconpath {
+		fname = path.Base(webiconurl.Path)
 	}
-
-	if ext != "" {
-		fn += ext
-	}
-	return fn
+	return Slugify(icon.WebsiteURL.Host, icon.Size, fname, path.Ext(webiconurl.String()))
 }
 
 // ReadImage reads the image, checks its content type validity, and update the image size according to the image content.
+// If WebIconURL returns an error, then try witout the base only.
+// If still in error try without subdomain
 func (icon *Favicon) ReadImage(client *http.Client) error {
-	req := icon.AbsURL()
+	var errN error
+	err1 := icon.readImage(client)
+	if err1 != nil && filepath.Base(icon.WebIconURL.Path) != icon.WebIconURL.Path {
+		icon.WebIconURL.Path = filepath.Base(icon.WebIconURL.Path)
+		errN = icon.readImage(client)
+	}
+
+	if errN != nil {
+		h := strings.Split(icon.WebIconURL.Host, ".")
+		if len(h) == 3 {
+			bkp := *icon.WebIconURL
+			icon.WebIconURL.Host = h[1] + "." + h[2]
+			errN = icon.readImage(client)
+			if errN == nil {
+				err1 = nil
+			} else {
+				*icon.WebIconURL = bkp
+			}
+		}
+	}
+
+	if errN != nil && icon.WebIconURL.Path != "favicon.ico" {
+		icon.WebIconURL.Path = "favicon.ico"
+		errN = icon.readImage(client)
+		if errN == nil {
+			err1 = nil
+		}
+	}
+
+	return err1
+}
+
+func (icon *Favicon) readImage(client *http.Client) error {
+	req := icon.WebIconURL.String()
 	resp, errhttp := doHttpGETRequest(client, req)
 	if errhttp != nil {
 		return fmt.Errorf("ReadImage %q: %+w", icon.WebIconURL.String(), errhttp)
@@ -122,13 +140,13 @@ func (icon *Favicon) ReadImage(client *http.Client) error {
 
 	// ignore unreadable files, for whatever reasons
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("ReadImage: %q status %s", icon.WebIconURL.String(), resp.Status)
+		return fmt.Errorf("ReadImage: %q status %s", req, resp.Status)
 	}
 
 	// copy data from HTTP response to Image byte slice
 	img, _ := io.ReadAll(resp.Body)
 	if len(img) == 0 {
-		return fmt.Errorf("ReadImage %q: unable to get the content of the icon", icon.WebIconURL.String())
+		return fmt.Errorf("ReadImage %q: unable to get the content of the icon", req)
 	}
 
 	// check content type
@@ -136,13 +154,17 @@ func (icon *Favicon) ReadImage(client *http.Client) error {
 	ext := filepath.Ext(icon.WebIconURL.Path)
 	if ext == ".svg" {
 		icon.Size = "SVG"
-		if !isValidSVG(img) {
+		if !svg.IsValidSVG(img) {
 			return fmt.Errorf("ReadImage %q: not a valid svg file", icon.WebIconURL.String())
 		}
 	}
+
+	// DEBUG:
+	// os.WriteFile("./.test/log", img, 0755)
+
 	mimetype := http.DetectContentType(img)
 	if ext != ".svg" && find(_FAVICON_MIMETYPE, mimetype) == -1 {
-		return fmt.Errorf("ReadImage %q: wrong content type %q", icon.WebIconURL.String(), mimetype)
+		return fmt.Errorf("ReadImage %q: wrong content type %q", req, mimetype)
 	}
 	icon.MimeType = mimetype
 	icon.Image = img
@@ -163,38 +185,14 @@ func (icon *Favicon) ReadImage(client *http.Client) error {
 		case "image/x-icon":
 			cfg, err = xicon.DecodeConfig(reader)
 		default:
-			log.Printf("ReadImage %q: unmanaged mimetype %s\n", icon.WebIconURL.String(), mimetype)
+			verbose.Printf(verbose.ALERT, "ReadImage %q: unmanaged mimetype %s\n", icon.WebIconURL.String(), mimetype)
 		}
 		if err != nil {
-			log.Printf("ReadImage %q: %s\n", icon.WebIconURL.String(), err.Error())
+			verbose.Printf(verbose.ALERT, "ReadImage %q: %s\n", icon.WebIconURL.String(), err.Error())
 		} else if cfg.Width > 0 && cfg.Height > 0 {
 			icon.Size = fmt.Sprintf("%vx%v", cfg.Width, cfg.Height)
 		}
 	}
 
 	return nil
-}
-
-// Returns true if the given buffer is a valid SVG.
-// Algo based on https://github.com/h2non/go-is-svg/blob/master/svg.go
-func isValidSVG(buf []byte) bool {
-	var (
-		htmlCommentRegex = regexp.MustCompile(`(?i)\<\!\-\-(?:.|\n|\r)*?-->`)
-		svgRegex         = regexp.MustCompile(`(?i)^\s*(?:<\?xml[^>]*>\s*)?(?:<!doctype svg[^>]*>\s*)?<svg[^>]*>[^*]*<\/svg>\s*$`)
-	)
-	return !isBinary(buf) && svgRegex.Match(htmlCommentRegex.ReplaceAll(buf, []byte{}))
-}
-
-// isBinary checks if the given buffer is a binary file.
-func isBinary(buf []byte) bool {
-	if len(buf) < 24 {
-		return false
-	}
-	for i := 0; i < 24; i++ {
-		charCode, _ := utf8.DecodeRuneInString(string(buf[i]))
-		if charCode == 65533 || charCode <= 8 {
-			return true
-		}
-	}
-	return false
 }

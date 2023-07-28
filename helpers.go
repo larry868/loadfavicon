@@ -5,18 +5,9 @@ package loadfavicon
 import (
 	"strconv"
 	"strings"
-)
 
-// find looks for a specific item in a slice and returns the index of the value found.
-// Returns -1 if value is not found.
-func find(list []string, value string) int {
-	for i, v := range list {
-		if v == value {
-			return i
-		}
-	}
-	return -1
-}
+	"github.com/gosimple/slug"
+)
 
 // ToPixels converts size string in number of pixels.
 // Expected size pattern is {width}x{height}|svg.
@@ -37,4 +28,50 @@ func ToPixels(size string) int64 {
 	}
 
 	return x * y
+}
+
+// Slugify returns the slugified name base on a simple filename with an extension, and a prefix.
+// The returned string is ready to be used as a filename.
+//
+// The returned string pattern is:
+//
+//	[{prefix1}+][{prefix2}+][{filename}].{ext}
+//
+// where each part is slugified. Any query and fragment are ignored.
+//
+// Returns only the file name, not an absolute path.
+func Slugify(prefix1 string, prefix2 string, filename string, ext string) string {
+
+	var s string
+
+	if prefix1 != "" {
+		s = slug.Make(prefix1)
+		s += "+"
+	}
+
+	if prefix2 != "" {
+		s += strings.ToLower(prefix2)
+		s += "+"
+	}
+
+	if filename != "" && filename != "." && filename != "/" {
+		filename, _ = strings.CutSuffix(filename, ext)
+		s += slug.Make(filename)
+	}
+
+	if ext != "" {
+		s += ext
+	}
+	return s
+}
+
+// find looks for a specific item in a slice and returns the index of the value found.
+// Returns -1 if value is not found.
+func find(list []string, value string) int {
+	for i, v := range list {
+		if v == value {
+			return i
+		}
+	}
+	return -1
 }

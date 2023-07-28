@@ -7,7 +7,6 @@ package loadfavicon
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lolorenzo777/verbose"
 	"golang.org/x/net/html"
 )
 
@@ -49,6 +49,9 @@ var _FAVICON_EXT = []string{
 // Returns the number of successfull downloads.
 func DownloadAll(client *http.Client, websiteURL string, toDir string, onlymissing bool) (n int, err error) {
 	icons, err := Download(client, websiteURL, toDir, "", onlymissing, true)
+	if err != nil {
+		verbose.Error("Download", err)
+	}
 	return len(icons), err
 }
 
@@ -64,10 +67,14 @@ func DownloadAll(client *http.Client, websiteURL string, toDir string, onlymissi
 // Returns the filename of the downloaded icon. If none icons are found the returned filename is empty with no error.
 func DownloadOne(client *http.Client, websiteURL string, toDir string, onlymissing bool) (iconfilename string, err error) {
 	icons, err := Download(client, websiteURL, toDir, "maxres", onlymissing, false)
-	if err != nil || len(icons) == 0 {
+	if err != nil {
+		verbose.Error("Download", err)
 		return "", err
 	}
-	return icons[0].DiskFileName(false), nil
+	if len(icons) == 0 {
+		return "", err
+	}
+	return icons[0].Slugify(false), nil
 }
 
 // Download downloads favicons related to a website and save it locally to the 'toDir' directory. The directory is created if it does not exist.
@@ -106,10 +113,11 @@ func Download(client *http.Client, websiteURL string, toDir string, size string,
 
 	// save on disk each favicons
 	for _, icon := range icons {
-		ifn := filepath.Join(toDir, icon.DiskFileName(suffix))
+		ifn := filepath.Join(toDir, icon.Slugify(suffix))
 		if onlymissing {
 			_, errX := os.Stat(ifn)
-			if errX == nil { // !os.IsNotExist(errF)
+			if errX == nil {
+				// file exists
 				continue
 			}
 		}
@@ -123,7 +131,12 @@ func Download(client *http.Client, websiteURL string, toDir string, size string,
 			return favicons, fmt.Errorf("Download: %+w", errX)
 		}
 		favicons = append(favicons, icon)
-		// DEBUG:	fmt.Println(favicon)
+
+		verbose.Printf(verbose.INFO, "website: %q, icon downloaded: %s\n", websiteURL, icon.WebIconURL.String())
+	}
+
+	if len(favicons) == 0 {
+		verbose.Printf(verbose.INFO, "website: %q, no icon downloaded\n", websiteURL)
 	}
 	return favicons, nil
 }
@@ -169,8 +182,7 @@ func Read(client *http.Client, websiteURL string, sz ...string) (favicons []Favi
 	for _, icon := range icons {
 		err := icon.ReadImage(client)
 		if err != nil {
-			// TODO: use verbose package
-			log.Printf("Read [%s]: %s\n", websiteURL, err.Error())
+			verbose.Printf(verbose.WARNING, "Read [%s]: %s\n", websiteURL, err.Error())
 			continue
 		}
 		favicons = append(favicons, icon)
@@ -231,18 +243,19 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 	if weburl == nil {
 		return nil, fmt.Errorf("GetFaviconLinks: %+w", err)
 	}
+	sweburl := weburl.String()
 
 	// load the website page
-	resp, err := doHttpGETRequest(client, weburl.String())
+	resp, err := doHttpGETRequest(client, sweburl)
 	if err != nil {
 		return favicons, fmt.Errorf("GetFaviconLinks: %+w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return favicons, fmt.Errorf("GetFaviconLinks: %q returned status %s", weburl.String(), resp.Status)
+		return favicons, fmt.Errorf("GetFaviconLinks: %q returned status %s", sweburl, resp.Status)
 	}
 
-	// if not a text content then try with the host without the path
+	// if the page is not a text content then try with the host without the path
 	// if does not succeed yet then return an error
 	ctyp := resp.Header.Get("Content-Type")
 	if ctyp[:4] != "text" {
@@ -251,6 +264,16 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 			return getFaviconLinks(client, weburl.String())
 		}
 		return favicons, fmt.Errorf("GetFaviconLinks: unable to find favicon")
+	}
+
+	finalurl := resp.Request.URL
+	sfinalurl := finalurl.String()
+	if sfinalurl != sweburl {
+		maxchar := len(sfinalurl)
+		if maxchar > 50 {
+			maxchar = 50
+		}
+		verbose.Printf(verbose.INFO, "GetFaviconLinks: => website: %q, redirected to: %s\n", sweburl, sfinalurl[:maxchar]+" ...")
 	}
 
 	doc, err := html.Parse(resp.Body)
@@ -278,24 +301,36 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 			// appends only favicon for elements with a valid rel, an href and valid file extension
 			if rel != "" && href != "" {
 				if find(_FAVICON_REL, rel) >= 0 {
-					if phref, err := url.Parse(href); phref != nil && err == nil {
-						if filepath.Ext(phref.Path) != "" && find(_FAVICON_EXT, filepath.Ext(phref.Path)) == -1 {
+					if iconurl, err := url.Parse(href); iconurl != nil && err == nil {
+
+						iconurlext := filepath.Ext(iconurl.Path)
+
+						// FAVIRON_REL but with a bad file extension
+						if iconurlext != "" && find(_FAVICON_EXT, iconurlext) == -1 {
+							verbose.Debug("GetFaviconLinks: => website: %q, unmanaged rel type. rel=%q, ext=%q,", sweburl, rel, iconurlext)
 							return
 						}
+
+						// XXX: make phref abs
+						if !iconurl.IsAbs() {
+							iconurl = finalurl.JoinPath(iconurl.String())
+						}
+
 						// avoid duplicate, rare case !
 						for _, already := range favicons {
-							if already.WebIconURL.String() == phref.String() {
+							if already.WebIconURL.String() == iconurl.String() {
 								return
 							}
 						}
+
 						favicons = append(favicons, Favicon{
 							WebsiteURL: weburl,
-							WebIconURL: phref,
+							WebIconURL: iconurl,
 							Size:       sizes,
 							Color:      color})
+
 					} else {
-						// TODO: use verbose package
-						log.Printf("GetFaviconLinks: %s", err.Error())
+						verbose.Printf(verbose.WARNING, "GetFaviconLinks: %s\n", err.Error())
 					}
 				}
 			}
@@ -305,21 +340,21 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			scan(c)
 		}
-		return
 	}
 	scan(doc)
 
+	verbose.Printf(verbose.INFO, "GetFaviconLinks: => website: %q, %v favicons links found\n", sweburl, len(favicons))
+
 	// append the favicon.ico to the list as the default file to lookup
 	if len(favicons) == 0 {
-		faviconpath, err := url.JoinPath(weburl.String(), "favicon.ico")
-		if err != nil {
-			// TODO: use verbose package
-			log.Printf("GetFaviconLinks: %s", err.Error())
-		} else {
-			ico := Favicon{WebsiteURL: weburl}
-			ico.WebIconURL, _ = url.Parse(faviconpath)
-			favicons = append(favicons, ico)
-		}
+
+		ico := Favicon{WebsiteURL: weburl}
+		ico.WebIconURL = finalurl.JoinPath("favicon.ico")
+		ico.WebIconURL.RawQuery = ""
+		ico.WebIconURL.Fragment = ""
+
+		favicons = append(favicons, ico)
+		verbose.Printf(verbose.DEBUG, "GetFaviconLinks: => website: %q, favicons.ico single candidate\n", sweburl)
 	}
 
 	return favicons, nil
