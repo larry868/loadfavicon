@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/lolorenzo777/loadfavicon/v2"
+	"github.com/lolorenzo777/verbose"
 )
 
 func main() {
@@ -21,6 +22,8 @@ func main() {
 	flag.StringVar(&size, "size", "", "{width}x{height}|maxres|svg. download only one icon. download the icon with closest resolution to the request.")
 	flag.BoolVar(&onlymissing, "onlymissing", false, "download the icons file that has not already been downloaded")
 	flag.BoolVar(&suffix, "suffix", false, "suffix the written website file with the icon file name")
+	flag.BoolVar(&verbose.IsOn, "verbose", false, "verbose output")
+	flag.BoolVar(&verbose.IsDebugging, "debug", false, "output debugging informations")
 	flag.Parse()
 
 	if websiteURL == "" || toDir == "" {
