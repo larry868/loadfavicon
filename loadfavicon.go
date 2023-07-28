@@ -169,6 +169,7 @@ func Read(client *http.Client, websiteURL string, sz ...string) (favicons []Favi
 	for _, icon := range icons {
 		err := icon.ReadImage(client)
 		if err != nil {
+			// TODO: use verbose package
 			log.Printf("Read [%s]: %s\n", websiteURL, err.Error())
 			continue
 		}
@@ -293,6 +294,7 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 							Size:       sizes,
 							Color:      color})
 					} else {
+						// TODO: use verbose package
 						log.Printf("GetFaviconLinks: %s", err.Error())
 					}
 				}
@@ -311,6 +313,7 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 	if len(favicons) == 0 {
 		faviconpath, err := url.JoinPath(weburl.String(), "favicon.ico")
 		if err != nil {
+			// TODO: use verbose package
 			log.Printf("GetFaviconLinks: %s", err.Error())
 		} else {
 			ico := Favicon{WebsiteURL: weburl}
