@@ -162,13 +162,18 @@ func Read(client *http.Client, websiteURL string, sz ...string) (favicons []Favi
 	}
 
 	// get Favicon Links from the website header content
+	// verbose rror but continue to try with favicon.ico
 	icons, errX := getFaviconLinks(client, websiteURL)
 	if errX != nil {
-		return nil, fmt.Errorf("Read [%s]: %+w", websiteURL, errX)
+		verbose.Printf(verbose.WARNING, "Read [%s]: %s\n", websiteURL, errX.Error())
+		err = fmt.Errorf("Read [%s]: %+w", websiteURL, errX)
+		//		return nil, fmt.Errorf("Read [%s]: %+w", websiteURL, errX)
 	}
 
-	// reduce the scope to the svg file if any, and if maxres request
-	if size == "maxres" {
+	// reduce the scope to the svg file if maxres or svg request, or if unable to understand the requested size
+	// to reduce response time
+	reqres := ToPixels(size)
+	if size == "maxres" || size == "svg" || reqres <= 0 {
 		for _, icon := range icons {
 			if icon.IsSVG() {
 				icons = make([]Favicon, 1)
@@ -179,18 +184,42 @@ func Read(client *http.Client, websiteURL string, sz ...string) (favicons []Favi
 	}
 
 	// scan and read all favicon images
+	tryfaviconico := false
 	for _, icon := range icons {
-		err := icon.ReadImage(client)
-		if err != nil {
-			verbose.Printf(verbose.WARNING, "Read [%s]: %s\n", websiteURL, err.Error())
+		if icon.IsFaviconIco() {
+			tryfaviconico = true
+		}
+		errI := icon.ReadImage(client)
+		if errI != nil {
+			verbose.Printf(verbose.WARNING, "Read [%s]: %s\n", websiteURL, errI.Error())
 			continue
 		}
 		favicons = append(favicons, icon)
 	}
 
-	// return empty favicons if none found, and no error
+	// last try with "favicon.ico"
+	if len(favicons) == 0 && !tryfaviconico {
+		verbose.Printf(verbose.WARNING, "Read [%s]: reading all images fail. Try with favicon.ico\n", websiteURL)
+		dotico := &Favicon{}
+		dotico.WebsiteURL, _ = url.Parse(websiteURL)
+		dotico.WebIconURL = new(url.URL)
+		dotico.WebIconURL.Scheme = dotico.WebsiteURL.Scheme
+		dotico.WebIconURL.Host = dotico.WebsiteURL.Host
+		dotico.WebIconURL.Path = "favicon.ico"
+		dotico.WebIconURL.RawQuery = ""
+		dotico.WebIconURL.Fragment = ""
+
+		errI := dotico.ReadImage(client)
+		if errI != nil {
+			verbose.Printf(verbose.WARNING, "Read [%s]: %s\n", websiteURL, errI.Error())
+		} else {
+			favicons = append(favicons, *dotico)
+		}
+	}
+
+	// return empty favicons if none found
 	if len(favicons) == 0 {
-		return favicons, nil
+		return favicons, err
 	}
 
 	// sort favicons from high res to low res, starting by svg, finishing by unknown res
@@ -203,10 +232,8 @@ func Read(client *http.Client, websiteURL string, sz ...string) (favicons []Favi
 		return favicons, nil
 	}
 
-	oneicon := make([]Favicon, 1)
-
 	// return the favicon with maxrez if the request is svg, maxres, or if unable to understand the requested size
-	reqres := ToPixels(size)
+	oneicon := make([]Favicon, 1)
 	if size == "maxres" || size == "svg" || reqres <= 0 {
 		oneicon[0] = favicons[0]
 		return oneicon, nil
@@ -252,20 +279,22 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return favicons, fmt.Errorf("GetFaviconLinks: %q returned status %s", sweburl, resp.Status)
+		return favicons, fmt.Errorf("GetFaviconLinks: %q returned status %s", sweburl, strings.Trim(resp.Status, " "))
 	}
 
 	// if the page is not a text content then try with the host without the path
 	// if does not succeed yet then return an error
 	ctyp := resp.Header.Get("Content-Type")
-	if ctyp[:4] != "text" {
+	if len(ctyp) < 4 || ctyp[:4] != "text" {
 		if weburl.Path != "" {
 			weburl.Path = ""
+			verbose.Printf(verbose.INFO, "GetFaviconLinks: => website: %q, not an html page: %s, try %q\n", sweburl, ctyp, weburl.String())
 			return getFaviconLinks(client, weburl.String())
 		}
 		return favicons, fmt.Errorf("GetFaviconLinks: unable to find favicon")
 	}
 
+	// redirected response ?
 	finalurl := resp.Request.URL
 	sfinalurl := finalurl.String()
 	if sfinalurl != sweburl {
@@ -276,6 +305,7 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 		verbose.Printf(verbose.INFO, "GetFaviconLinks: => website: %q, redirected to: %s\n", sweburl, sfinalurl[:maxchar]+" ...")
 	}
 
+	// extract <link rel={_FAVICON_REL} href={url{_FAVICON_EXT}}>
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
 		return favicons, fmt.Errorf("GetFaviconLinks: %+w", err)
@@ -298,7 +328,7 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 				}
 			}
 
-			// appends only favicon for elements with a valid rel, an href and valid file extension
+			// appends favicon for elements with a valid rel and a valid href file extension only
 			if rel != "" && href != "" {
 				if find(_FAVICON_REL, rel) >= 0 {
 					if iconurl, err := url.Parse(href); iconurl != nil && err == nil {
@@ -311,9 +341,10 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 							return
 						}
 
-						// XXX: make phref abs
+						// make iconurl and absolute url with the finalurl host
 						if !iconurl.IsAbs() {
-							iconurl = finalurl.JoinPath(iconurl.String())
+							iconurl.Scheme = finalurl.Scheme
+							iconurl.Host = finalurl.Host
 						}
 
 						// avoid duplicate, rare case !
@@ -347,14 +378,17 @@ func getFaviconLinks(client *http.Client, websiteURL string) (favicons []Favicon
 
 	// append the favicon.ico to the list as the default file to lookup
 	if len(favicons) == 0 {
+		dotico := Favicon{}
+		dotico.WebsiteURL = weburl
+		dotico.WebIconURL = new(url.URL)
+		dotico.WebIconURL.Scheme = weburl.Scheme
+		dotico.WebIconURL.Host = weburl.Host
+		dotico.WebIconURL.Path = "favicon.ico"
+		dotico.WebIconURL.RawQuery = ""
+		dotico.WebIconURL.Fragment = ""
 
-		ico := Favicon{WebsiteURL: weburl}
-		ico.WebIconURL = finalurl.JoinPath("favicon.ico")
-		ico.WebIconURL.RawQuery = ""
-		ico.WebIconURL.Fragment = ""
-
-		favicons = append(favicons, ico)
-		verbose.Printf(verbose.DEBUG, "GetFaviconLinks: => website: %q, favicons.ico single candidate\n", sweburl)
+		favicons = append(favicons, dotico)
+		verbose.Printf(verbose.INFO, "GetFaviconLinks: => website: %q, favicons.ico single candidate\n", sweburl)
 	}
 
 	return favicons, nil

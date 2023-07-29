@@ -63,6 +63,11 @@ func (icon Favicon) IsSVG() bool {
 	return filepath.Ext(icon.WebIconURL.Path) == ".svg"
 }
 
+// IsFaviconIco true if the icon file name is "favicon.ico"
+func (icon Favicon) IsFaviconIco() bool {
+	return strings.ToLower(path.Base(icon.WebIconURL.Path)) == "favicon.ico"
+}
+
 // AbsURL returns the url string of the webicon, making an absolute path with the WebsiteURL if required.
 // func (icon Favicon) AbsURL() string {
 // 	if icon.WebIconURL.IsAbs() {
@@ -83,7 +88,6 @@ func (icon Favicon) IsSVG() bool {
 //
 // Returns only the file name, not an absolute path.
 func (icon Favicon) Slugify(iconpath bool) string {
-
 	webiconurl := icon.WebIconURL
 	webiconurl.RawQuery = ""
 	webiconurl.Fragment = ""
@@ -97,74 +101,69 @@ func (icon Favicon) Slugify(iconpath bool) string {
 // ReadImage reads the image, checks its content type validity, and update the image size according to the image content.
 // If WebIconURL returns an error, then try witout the base only.
 // If still in error try without subdomain
+// func (icon *Favicon) ReadImage(client *http.Client) error {
+// 	var errN error
+// 	err1 := icon.readImage(client)
+// 	if err1 != nil {
+// 		// 2nd try: without subdomain
+// 		h := strings.Split(icon.WebIconURL.Host, ".")
+// 		if len(h) == 3 {
+// 			bkp := *icon.WebIconURL
+// 			icon.WebIconURL.Host = h[1] + "." + h[2]
+// 			errN = icon.readImage(client)
+// 			if errN == nil {
+// 				err1 = nil
+// 			} else {
+// 				*icon.WebIconURL = bkp
+// 			}
+// 		}
+// 	}
+
+// 	if errN != nil && icon.WebIconURL.Path != "favicon.ico" {
+// 		icon.WebIconURL.Path = "favicon.ico"
+// 		errN = icon.readImage(client)
+// 		if errN == nil {
+// 			err1 = nil
+// 		}
+// 	}
+
+// 	return err1
+// }
+
 func (icon *Favicon) ReadImage(client *http.Client) error {
-	var errN error
-	err1 := icon.readImage(client)
-	if err1 != nil && filepath.Base(icon.WebIconURL.Path) != icon.WebIconURL.Path {
-		icon.WebIconURL.Path = filepath.Base(icon.WebIconURL.Path)
-		errN = icon.readImage(client)
-	}
-
-	if errN != nil {
-		h := strings.Split(icon.WebIconURL.Host, ".")
-		if len(h) == 3 {
-			bkp := *icon.WebIconURL
-			icon.WebIconURL.Host = h[1] + "." + h[2]
-			errN = icon.readImage(client)
-			if errN == nil {
-				err1 = nil
-			} else {
-				*icon.WebIconURL = bkp
-			}
-		}
-	}
-
-	if errN != nil && icon.WebIconURL.Path != "favicon.ico" {
-		icon.WebIconURL.Path = "favicon.ico"
-		errN = icon.readImage(client)
-		if errN == nil {
-			err1 = nil
-		}
-	}
-
-	return err1
-}
-
-func (icon *Favicon) readImage(client *http.Client) error {
-	req := icon.WebIconURL.String()
-	resp, errhttp := doHttpGETRequest(client, req)
+	siconurl := icon.WebIconURL.String()
+	resp, errhttp := doHttpGETRequest(client, siconurl)
 	if errhttp != nil {
-		return fmt.Errorf("ReadImage %q: %+w", icon.WebIconURL.String(), errhttp)
+		return fmt.Errorf("ReadImage %q: %+w", siconurl, errhttp)
 	}
 	defer resp.Body.Close()
 
-	// ignore unreadable files, for whatever reasons
+	// unreadable files for whatever reasons
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("ReadImage: %q status %s", req, resp.Status)
+		return fmt.Errorf("ReadImage: %q status %s", siconurl, strings.Trim(resp.Status, " "))
 	}
 
 	// copy data from HTTP response to Image byte slice
 	img, _ := io.ReadAll(resp.Body)
 	if len(img) == 0 {
-		return fmt.Errorf("ReadImage %q: unable to get the content of the icon", req)
+		return fmt.Errorf("ReadImage %q: unable to get the content of the icon", siconurl)
 	}
 
 	// check content type
 	// warning: DetectContentType detect SVG as text (see https://mimesniff.spec.whatwg.org/#identifying-a-resource-with-an-unknown-mime-type )
-	ext := filepath.Ext(icon.WebIconURL.Path)
+	ext := strings.ToLower(filepath.Ext(icon.WebIconURL.Path))
 	if ext == ".svg" {
-		icon.Size = "SVG"
+		icon.Size = "svg"
 		if !svg.IsValidSVG(img) {
-			return fmt.Errorf("ReadImage %q: not a valid svg file", icon.WebIconURL.String())
+			return fmt.Errorf("ReadImage %q: not a valid svg file", siconurl)
 		}
 	}
 
-	// DEBUG:
-	// os.WriteFile("./.test/log", img, 0755)
-
 	mimetype := http.DetectContentType(img)
 	if ext != ".svg" && find(_FAVICON_MIMETYPE, mimetype) == -1 {
-		return fmt.Errorf("ReadImage %q: wrong content type %q", req, mimetype)
+		// DEBUG:
+		// os.WriteFile("./.test/log", img, 0755)
+		return fmt.Errorf("ReadImage %q: wrong content type %q", siconurl, mimetype)
 	}
 	icon.MimeType = mimetype
 	icon.Image = img
@@ -182,13 +181,13 @@ func (icon *Favicon) readImage(client *http.Client) error {
 			cfg, err = jpeg.DecodeConfig(reader)
 		case "image/webp":
 			cfg, err = webp.DecodeConfig(reader)
-		case "image/x-icon":
+		case "image/x-icon", "image/vnd.microsoft.icon":
 			cfg, err = xicon.DecodeConfig(reader)
 		default:
-			verbose.Printf(verbose.ALERT, "ReadImage %q: unmanaged mimetype %s\n", icon.WebIconURL.String(), mimetype)
+			verbose.Printf(verbose.ALERT, "ReadImage %q: unmanaged mimetype %s\n", siconurl, mimetype)
 		}
 		if err != nil {
-			verbose.Printf(verbose.ALERT, "ReadImage %q: %s\n", icon.WebIconURL.String(), err.Error())
+			verbose.Printf(verbose.ALERT, "ReadImage %q: %s\n", siconurl, err.Error())
 		} else if cfg.Width > 0 && cfg.Height > 0 {
 			icon.Size = fmt.Sprintf("%vx%v", cfg.Width, cfg.Height)
 		}
