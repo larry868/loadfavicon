@@ -27,7 +27,7 @@ func main() {
 	flag.Parse()
 
 	if websiteURL == "" || toDir == "" {
-		fmt.Println("loadfavicon -url={websiteURL} -to={toDir} [--size] [--onlymissing] [--suffix]")
+		fmt.Println("loadfavicon -url={websiteURL} -to={toDir} [--size] [--onlymissing] [--suffix] [--verbose]")
 		return
 	}
 
