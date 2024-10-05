@@ -1,4 +1,4 @@
-// Copyright @lolorenzo777 - 2023
+// Copyright @larry868 - 2023-2024
 
 package loadfavicon
 
@@ -16,7 +16,7 @@ import (
 )
 
 var _gwebsitesOK = []string{
-	"https://lolorenzo777.github.io/website4tests-2",
+	"https://larry868.github.io/website4tests-2",
 	"https://laurent.lourenco.pro",
 	"https://go.dev/",
 	"https://brave.com/",
@@ -131,8 +131,8 @@ func ExampleGetFaviconLinks_second() {
 	}
 
 	// Output:
-	// GetFaviconLinks: https://lolorenzo777.github.io/website4tests-2
-	// https://lolorenzo777.github.io/website4tests-2  --  https://lolorenzo777.github.io/website4tests-2/test-32x32.png
+	// GetFaviconLinks: https://larry868.github.io/website4tests-2
+	// https://larry868.github.io/website4tests-2  --  https://larry868.github.io/website4tests-2/test-32x32.png
 	//
 	// GetFaviconLinks: https://laurent.lourenco.pro
 	// https://laurent.lourenco.pro  --  https://laurent.lourenco.pro/favicon-32x32.png
@@ -266,8 +266,8 @@ func ExampleRead() {
 	}
 
 	// Output:
-	// Read: https://lolorenzo777.github.io/website4tests-2
-	// https://lolorenzo777.github.io/website4tests-2  --  https://lolorenzo777.github.io/website4tests-2/test-32x32.png
+	// Read: https://larry868.github.io/website4tests-2
+	// https://larry868.github.io/website4tests-2  --  https://larry868.github.io/website4tests-2/test-32x32.png
 	//
 	// Read: https://laurent.lourenco.pro
 	// https://laurent.lourenco.pro  --  https://laurent.lourenco.pro/apple-touch-icon.png
@@ -356,7 +356,7 @@ func TestDownloadDummy(t *testing.T) {
 
 func TestDownloadNone(t *testing.T) {
 	client := &http.Client{Timeout: time.Second * 5}
-	icons, err := Download(client, "https://lolorenzo777.github.io/website4tests-1", TEST_DIR, "", false, false)
+	icons, err := Download(client, "https://larry868.github.io/website4tests-1", TEST_DIR, "", false, false)
 	require.NoError(t, err)
 	assert.Equal(t, 0, len(icons))
 }
@@ -388,7 +388,7 @@ func ExampleDownload() {
 	os.RemoveAll("./examples")
 
 	client := &http.Client{Timeout: time.Second * 5}
-	DownloadOne(client, "https://lolorenzo777.github.io/website4tests-2", "./examples", false)
+	DownloadOne(client, "https://larry868.github.io/website4tests-2", "./examples", false)
 	DownloadAll(client, "https://laurent.lourenco.pro", "./examples", false)
 	DownloadOne(client, "https://web.archive.org/", "./examples", false)
 	DownloadOne(client, "https://wikipedia.org", "./examples", false)
@@ -402,7 +402,7 @@ func ExampleDownload() {
 	// laurent-lourenco-pro+16x16+favicon-16x16.png
 	// laurent-lourenco-pro+180x180+apple-touch-icon.png
 	// laurent-lourenco-pro+32x32+favicon-32x32.png
-	// lolorenzo777-github-io+32x32+.png
+	// larry868-github-io+32x32+.png
 	// web-archive-org+32x32+.ico
 	// wikipedia-org+160x160+.png
 }

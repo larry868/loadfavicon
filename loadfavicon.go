@@ -1,5 +1,4 @@
-// Copyright @lolorenzo777 - 2023
-
+// Copyright @larry868 - 2023-2024
 /*
 loadfavicon module includes a package and a command tool to downloads favicons of a given website.
 */

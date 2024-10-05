@@ -16,28 +16,28 @@ The version 2 has been fully rewritten.
 You can install it and run it with the `loadfavicon` command line
 
 ```
-go install github.com/lolorenzo777/loadfavicon
+go install github.com/larry/loadfavicon
 ```
 
 or you can use it in your own code
 
 ```
-go get github.com/lolorenzo777/loadfavicon
+go get github.com/larry868/loadfavicon
 ```
 
 
 ## Requests or bugs?
 
-https://github.com/lolorenzo777/loadfavicon/issues
+https://github.com/larry868/loadfavicon/issues
 
 # Licence
 
-Copyright @lolorenzo777 - 2023
+Copyright @larry868 - 2023-2024
 
 [MIT Licence](LICENCE)
 
 # _References_
 
-- https://github.com/lolorenzo777/favicon-cheat-sheet
+- https://github.com/larry868/favicon-cheat-sheet
 - https://en.wikipedia.org/wiki/Favicon
 

@@ -1,5 +1,4 @@
-// Copyright @lolorenzo777 - 2023
-
+// Copyright @larry868 - 2023-2024
 package main
 
 import (
@@ -9,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/lolorenzo777/loadfavicon/v2"
+	"github.com/larry868/loadfavicon/v2"
 	"github.com/lolorenzo777/verbose"
 )
 

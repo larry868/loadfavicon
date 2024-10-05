@@ -1,4 +1,4 @@
-// Copyright @lolorenzo777 - 2023
+// Copyright @larry868 - 2023-2024
 
 package loadfavicon
 
@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lolorenzo777/loadfavicon/v2/pkg/svg"
+	"github.com/larry868/loadfavicon/v2/pkg/svg"
 	"github.com/lolorenzo777/verbose"
 	xicon "github.com/mat/besticon/ico"
 	"golang.org/x/image/webp"
