@@ -16,7 +16,7 @@ The version 2 has been fully rewritten.
 You can install it and run it with the `loadfavicon` command line
 
 ```
-go install github.com/larry/loadfavicon
+go install github.com/larry868/loadfavicon
 ```
 
 or you can use it in your own code

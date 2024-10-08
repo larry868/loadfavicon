@@ -3,6 +3,8 @@
 package loadfavicon
 
 import (
+	"log"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -63,6 +65,23 @@ func Slugify(prefix1 string, prefix2 string, filename string, ext string) string
 		s += ext
 	}
 	return s
+}
+
+// SlugHost slugify the website URL
+func SlugHost(website string) string {
+	hosturl, err := url.Parse(website)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	if len(hosturl.Scheme) == 0 {
+		hosturl.Scheme = "http"
+	}
+	hosturl.User = nil
+	hosturl.RawQuery = ""
+	hosturl.Fragment = ""
+	hosturl.Path = strings.TrimPrefix(hosturl.Path, "/")
+	return slug.Make(hosturl.Hostname() + hosturl.Path)
 }
 
 // find looks for a specific item in a slice and returns the index of the value found.
