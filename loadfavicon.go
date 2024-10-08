@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lolorenzo777/verbose"
+	"github.com/larry868/verbose"
 	"golang.org/x/net/html"
 )
 

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/larry868/loadfavicon/v2"
-	"github.com/lolorenzo777/verbose"
+	"github.com/larry868/verbose"
 )
 
 func main() {

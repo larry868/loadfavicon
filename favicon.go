@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/larry868/loadfavicon/v2/pkg/svg"
-	"github.com/lolorenzo777/verbose"
+	"github.com/larry868/verbose"
 	xicon "github.com/mat/besticon/ico"
 	"golang.org/x/image/webp"
 )

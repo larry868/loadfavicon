@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lolorenzo777/verbose"
+	"github.com/larry868/verbose"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,7 +131,7 @@ func ExampleGetFaviconLinks_second() {
 	}
 
 	// Output:
-	// GetFaviconLinks: https://larry868.github.io/website4tests-2
+	// 	GetFaviconLinks: https://larry868.github.io/website4tests-2
 	// https://larry868.github.io/website4tests-2  --  https://larry868.github.io/website4tests-2/test-32x32.png
 	//
 	// GetFaviconLinks: https://laurent.lourenco.pro
@@ -151,15 +151,11 @@ func ExampleGetFaviconLinks_second() {
 	// https://brave.com/  --  https://brave.com/static-assets/images/cropped-brave_appicon_release-180x180.png
 	//
 	// GetFaviconLinks: https://github.com/
-	// https://github.com/  --  https://github.githubassets.com/pinned-octocat.svg
+	// https://github.com/  --  https://github.githubassets.com/assets/pinned-octocat-093da3e6fa40.svg
 	// https://github.com/  --  https://github.githubassets.com/favicons/favicon.svg
 	//
 	// GetFaviconLinks: https://www.sncf.com/
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon.ico
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon.png
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/apple-touch-icon.png
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon-32x32.png
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon-16x16.png
+	// https://www.sncf.com/  --  https://www.groupe-sncf.com/fr/apple-icon.png?4206d1c4293cbde7
 	//
 	// GetFaviconLinks: https://protonmail.com/
 	// https://protonmail.com/  --  https://proton.me/favicons/apple-touch-icon.png
@@ -179,9 +175,10 @@ func ExampleGetFaviconLinks_second() {
 	// https://www.cloudflare.com/  --  https://www.cloudflare.com/favicon.ico
 	//
 	// GetFaviconLinks: https://www.docker.com/
-	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2023/04/cropped-Docker-favicon-32x32.png
-	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2023/04/cropped-Docker-favicon-192x192.png
-	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2023/04/cropped-Docker-favicon-180x180.png
+	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2024/02/cropped-docker-logo-favicon-32x32.png
+	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2024/02/cropped-docker-logo-favicon-192x192.png
+	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2024/02/cropped-docker-logo-favicon-180x180.png
+
 }
 
 func ExampleGetFaviconLinks_third() {
@@ -202,15 +199,17 @@ func ExampleGetFaviconLinks_third() {
 
 	// Output:
 	// GetFaviconLinks: https://bitcoin.org/bitcoin.pdf
-	// https://bitcoin.org  --  https://bitcoin.org/favicon.png?1687792074
-	// https://bitcoin.org  --  https://bitcoin.org/img/icons/logo_ios.png?1687792074
+	// https://bitcoin.org  --  https://bitcoin.org/favicon.png?1725887272
+	// https://bitcoin.org  --  https://bitcoin.org/img/icons/logo_ios.png?1725887272
 	//
 	// GetFaviconLinks: https://twitter.com/
-	// GetFaviconLinks: Get "/": stopped after 10 redirects
+	// https://twitter.com/  --  https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png
+	// https://twitter.com/  --  https://abs.twimg.com/responsive-web/client-web/icon-svg.ea5ff4aa.svg
+	// https://twitter.com/  --  https://abs.twimg.com/favicons/twitter-pip.3.ico
 	//
 	// GetFaviconLinks: https://mail.proton.me/u/0/inbox/
 	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/favicon.ico
-	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/favicon.782cda472f79b5eed726.svg
+	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/static/favicon.d47d3d0bef6d338e377a.svg?v=5.0.48.7
 	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/apple-touch-icon-57x57.png
 	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/apple-touch-icon-60x60.png
 	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/apple-touch-icon-72x72.png
@@ -227,11 +226,12 @@ func ExampleGetFaviconLinks_third() {
 	// https://www.amazon.com/  --  https://www.amazon.com/favicon.ico
 	//
 	// GetFaviconLinks: https://getemoji.com/
-	// https://getemoji.com/  --  https://getemoji.com/ico/favicon.png
-	// https://getemoji.com/  --  https://getemoji.com/ico/apple-touch-icon.png
+	// https://getemoji.com/  --  https://getemoji.com/images/favicon.ico?v=1
+	// https://getemoji.com/  --  https://getemoji.com/images/apple-touch-icon.png
+	// https://getemoji.com/  --  https://getemoji.com/images/favicon.png
 	//
 	// GetFaviconLinks: https://www.linkedin.com/in/laurentlourenco
-	// GetFaviconLinks: "https://www.linkedin.com/in/laurentlourenco" returned status 999
+	// https://www.linkedin.com/in/laurentlourenco  --  https://static.licdn.com/aero-v1/sc/h/al2o9zrvru7aqj8e1x2rzsrca
 	//
 	// GetFaviconLinks: https://mail.google.com/mail/u/0/#inbox
 	// https://mail.google.com/mail/u/0/#inbox  --  https://mail.google.com/favicon.ico
@@ -284,14 +284,10 @@ func ExampleRead() {
 	// https://brave.com/  --  https://brave.com/static-assets/images/cropped-brave_appicon_release-32x32.png
 	//
 	// Read: https://github.com/
-	// https://github.com/  --  https://github.githubassets.com/pinned-octocat.svg
+	// https://github.com/  --  https://github.githubassets.com/assets/pinned-octocat-093da3e6fa40.svg
 	//
 	// Read: https://www.sncf.com/
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon.png
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/apple-touch-icon.png
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon.ico
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon-32x32.png
-	// https://www.sncf.com/  --  https://www.sncf.com/themes/sncfcom/img/favicon-16x16.png
+	// https://www.sncf.com/  --  https://www.groupe-sncf.com/fr/apple-icon.png?4206d1c4293cbde7
 	//
 	// Read: https://protonmail.com/
 	// https://protonmail.com/  --  https://proton.me/favicons/safari-pinned-tab.svg
@@ -303,9 +299,10 @@ func ExampleRead() {
 	// https://www.cloudflare.com/  --  https://www.cloudflare.com/favicon.ico
 	//
 	// Read: https://www.docker.com/
-	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2023/04/cropped-Docker-favicon-192x192.png
-	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2023/04/cropped-Docker-favicon-180x180.png
-	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2023/04/cropped-Docker-favicon-32x32.png
+	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2024/02/cropped-docker-logo-favicon-192x192.png
+	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2024/02/cropped-docker-logo-favicon-180x180.png
+	// https://www.docker.com/  --  https://www.docker.com/wp-content/uploads/2024/02/cropped-docker-logo-favicon-32x32.png
+
 }
 
 func ExampleRead_second() {
@@ -326,23 +323,25 @@ func ExampleRead_second() {
 
 	// Output:
 	// Read: https://bitcoin.org/bitcoin.pdf
-	// https://bitcoin.org  --  https://bitcoin.org/img/icons/logo_ios.png?1687792074
-	// https://bitcoin.org  --  https://bitcoin.org/favicon.png?1687792074
+	// https://bitcoin.org  --  https://bitcoin.org/img/icons/logo_ios.png?1725887272
+	// https://bitcoin.org  --  https://bitcoin.org/favicon.png?1725887272
 	//
 	// Read: https://twitter.com/
-	// https://twitter.com/  --  https://twitter.com/favicon.ico
+	// https://twitter.com/  --  https://abs.twimg.com/responsive-web/client-web/icon-svg.ea5ff4aa.svg
 	//
 	// Read: https://mail.proton.me/u/0/inbox/
-	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/favicon.782cda472f79b5eed726.svg
+	// https://mail.proton.me/u/0/inbox/  --  https://mail.proton.me/assets/static/favicon.d47d3d0bef6d338e377a.svg?v=5.0.48.7
 	//
 	// Read: https://www.amazon.com/
 	// https://www.amazon.com/  --  https://www.amazon.com/favicon.ico
 	//
 	// Read: https://getemoji.com/
-	// https://getemoji.com/  --  https://getemoji.com/favicon.ico
+	// https://getemoji.com/  --  https://getemoji.com/images/apple-touch-icon.png
+	// https://getemoji.com/  --  https://getemoji.com/images/favicon.png
+	// https://getemoji.com/  --  https://getemoji.com/images/favicon.ico?v=1
 	//
 	// Read: https://www.linkedin.com/in/laurentlourenco
-	// https://www.linkedin.com/in/laurentlourenco  --  https://www.linkedin.com/favicon.ico
+	// https://www.linkedin.com/in/laurentlourenco  --  https://static.licdn.com/aero-v1/sc/h/al2o9zrvru7aqj8e1x2rzsrca
 	//
 	// Read: https://mail.google.com/mail/u/0/#inbox
 	// https://mail.google.com/mail/u/0/#inbox  --  https://mail.google.com/favicon.ico
@@ -390,7 +389,6 @@ func ExampleDownload() {
 	client := &http.Client{Timeout: time.Second * 5}
 	DownloadOne(client, "https://larry868.github.io/website4tests-2", "./examples", false)
 	DownloadAll(client, "https://laurent.lourenco.pro", "./examples", false)
-	DownloadOne(client, "https://web.archive.org/", "./examples", false)
 	DownloadOne(client, "https://wikipedia.org", "./examples", false)
 
 	files, _ := os.ReadDir("./examples")
@@ -399,11 +397,10 @@ func ExampleDownload() {
 	}
 
 	// Output:
+	// larry868-github-io+32x32+.png
 	// laurent-lourenco-pro+16x16+favicon-16x16.png
 	// laurent-lourenco-pro+180x180+apple-touch-icon.png
 	// laurent-lourenco-pro+32x32+favicon-32x32.png
-	// larry868-github-io+32x32+.png
-	// web-archive-org+32x32+.ico
 	// wikipedia-org+160x160+.png
 }
 

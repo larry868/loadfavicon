@@ -3,12 +3,12 @@ module github.com/larry868/loadfavicon/v2
 go 1.23
 
 require (
-	github.com/gosimple/slug v1.13.1
-	github.com/lolorenzo777/verbose v1.2.8
+	github.com/gosimple/slug v1.14.0
+	github.com/larry868/verbose v1.3.0
 	github.com/mat/besticon v3.12.0+incompatible
-	github.com/stretchr/testify v1.8.4
-	golang.org/x/image v0.9.0
-	golang.org/x/net v0.12.0
+	github.com/stretchr/testify v1.9.0
+	golang.org/x/image v0.21.0
+	golang.org/x/net v0.30.0
 )
 
 require (
